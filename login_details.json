@@ -1,0 +1,6 @@
+{
+    "username": 123456789,
+    "password": "YourPassword",
+    "server": "Broker-Server",
+    "path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe"
+}

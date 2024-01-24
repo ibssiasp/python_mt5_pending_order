@@ -1,5 +1,12 @@
 import MetaTrader5 as mt5
 import pandas as pd
+import json
+
+# Function to read login detail
+def read_login_details(file_path='login_details.json'):
+    with open(file_path, 'r') as file:
+        login_details = json.load(file)
+    return login_details
 
 # Function to read lot size from 'lot.txt'
 def read_lot_size():
@@ -9,27 +16,17 @@ def read_lot_size():
 
 # Function to delete all pending orders
 def delete_all_pending_orders():
-    # Define pending order types
-    pending_order_types = [
-        mt5.ORDER_TYPE_BUY_LIMIT,
-        mt5.ORDER_TYPE_SELL_LIMIT,
-        mt5.ORDER_TYPE_BUY_STOP,
-        mt5.ORDER_TYPE_SELL_STOP,
-        mt5.ORDER_TYPE_BUY_STOP_LIMIT,
-        mt5.ORDER_TYPE_SELL_STOP_LIMIT
-    ]
-
-    # Get all pending orders
+     # get all pending orders
     orders = mt5.orders_get()
-    
-    # Delete each pending order
+
+    # loop through the orders and delete them
     for order in orders:
-        if order['type'] in pending_order_types:
-            result = mt5.order_delete(order['ticket'])
-            if result:
-                print(f"Pending order {order['ticket']} deleted")
-            else:
-                print(f"Failed to delete pending order {order['ticket']}")
+        # use the order_send function with the action parameter set to mt5.TRADE_ACTION_REMOVE
+        result = mt5.order_send({"action": mt5.TRADE_ACTION_REMOVE, "order": order.ticket})
+        if result.retcode == mt5.TRADE_RETCODE_DONE:
+            print(f"Order {order.ticket} deleted successfully")
+        else:
+            print(f"Order {order.ticket} deletion failed, retcode: {result.retcode}")
 
 # Function to send pending orders based on data in 'orderlist.xlsx'
 def send_pending_orders():
@@ -64,9 +61,9 @@ def send_pending_orders():
         }
         # Place limit order
         result = mt5.order_send(request)
+        print(f"{order_type} for {symbol} placed")
 
-
-# Function to start Meta Trader 5 (MT5) and send pending orders
+# Function to start Meta Trader 5 (MT5), remove pending orders, and send new pending orders
 def start_mt5_and_send_orders(username, password, server, path):
     # Ensure that all variables are the correct type
     uname = int(username)
@@ -81,11 +78,27 @@ def start_mt5_and_send_orders(username, password, server, path):
         # Login to MT5
         if mt5.login(login=uname, password=pword, server=trading_server):
             print("Login successful.")
-            # Call the function to delete pending orders
-            delete_all_pending_orders()
-            # Call the function to send pending orders
-            send_pending_orders()
-            return True
+
+            # User input section
+            while True:
+                print("\nMenu:")
+                print("1. Delete All Pending Orders")
+                print("2. Place New Pending Orders")
+                print("3. Exit")
+
+                choice = input("Enter your choice (1, 2, or 3): ")
+
+                if choice == '1':
+                    delete_all_pending_orders()
+                elif choice == '2':
+                    send_pending_orders()
+                elif choice == '3':
+                    print("Exiting the script.")
+                    mt5.shutdown()
+                    return True
+                else:
+                    print("Invalid choice. Please enter a valid option.")
+
         else:
             print("Login failed.")
             raise PermissionError("Login failed")
@@ -93,8 +106,9 @@ def start_mt5_and_send_orders(username, password, server, path):
         print("MT5 Initialization Failed")
         raise ConnectionAbortedError("MT5 Initialization failed")
 
-# Example usage
+# Execute Script
 try:
-    start_mt5_and_send_orders(username=123456789, password='YourPassword', server='Broker-Server', path=r"C:\Program Files\MetaTrader 5\terminal64.exe")
+    login_details = read_login_details()
+    start_mt5_and_send_orders(**login_details)
 except (PermissionError, ConnectionAbortedError) as e:
     print(f"Error: {e}")

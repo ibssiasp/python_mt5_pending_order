@@ -18,12 +18,7 @@ This script leverages the MetaTrader 5 (MT5) platform to automate the execution 
    - Calls the `delete_all_pending_orders()` function.
    - Calls the `send_pending_orders()` function to place new pending orders.
 
-## Example Usage:
-```python
-try:
-    start_mt5_and_send_orders(username=123456789, password='YourPassword', server='Broker-Server', path=r"C:\Program Files\MetaTrader 5\terminal64.exe")
-except (PermissionError, ConnectionAbortedError) as e:
-    print(f"Error: {e}")
+5. Remember to input your MT5 login detail in login_details.json
 ```
 
 **Note:** Ensure that the required files ('lot.txt' and 'orderlist.xlsx') exist and are correctly formatted for the script to function as expected. Adjust the example usage parameters according to your MT5 account details and file paths.
